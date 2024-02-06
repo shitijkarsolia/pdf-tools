@@ -1,5 +1,6 @@
 package stirling.software.SPDF.controller.api.converters;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 import java.net.URLConnection;
 
@@ -54,9 +55,9 @@ public class ConvertImgPDFController {
             colorTypeResult = ImageType.BINARY;
         }
         // returns bytes for image
-        boolean singleImage = singleOrMultiple.equals("single");
+        boolean singleImage = "single".equals(singleOrMultiple);
         byte[] result = null;
-        String filename = file.getOriginalFilename().replaceFirst("[.][^.]+$", "");
+        String filename = Filenames.toSimpleFileName(file.getOriginalFilename()).replaceFirst("[.][^.]+$", "");
         try {
             result =
                     PdfUtils.convertFromPdf(
@@ -96,7 +97,7 @@ public class ConvertImgPDFController {
     @Operation(
             summary = "Convert images to a PDF file",
             description =
-                    "This endpoint converts one or more images to a PDF file. Users can specify whether to stretch the images to fit the PDF page, and whether to automatically rotate the images. Input:Image Output:PDF Type:SISO?")
+                    "This endpoint converts one or more images to a PDF file. Users can specify whether to stretch the images to fit the PDF page, and whether to automatically rotate the images. Input:Image Output:PDF Type:MISO")
     public ResponseEntity<byte[]> convertToPdf(@ModelAttribute ConvertToPdfRequest request)
             throws IOException {
         MultipartFile[] file = request.getFileInput();
@@ -113,6 +114,6 @@ public class ConvertImgPDFController {
 
     private String getMediaType(String imageFormat) {
         String mimeType = URLConnection.guessContentTypeFromName("." + imageFormat);
-        return mimeType.equals("null") ? "application/octet-stream" : mimeType;
+        return "null".equals(mimeType) ? "application/octet-stream" : mimeType;
     }
 }

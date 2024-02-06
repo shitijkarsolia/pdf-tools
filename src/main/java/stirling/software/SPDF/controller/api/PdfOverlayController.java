@@ -1,13 +1,16 @@
 package stirling.software.SPDF.controller.api;
 
+import io.github.pixee.security.Filenames;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Overlay;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.http.MediaType;
@@ -53,7 +56,7 @@ public class PdfOverlayController {
             // "FixedRepeatOverlay"
             int[] counts = request.getCounts(); // Used for FixedRepeatOverlay mode
 
-            try (PDDocument basePdf = PDDocument.load(baseFile.getInputStream());
+            try (PDDocument basePdf = Loader.loadPDF(baseFile.getBytes());
                     Overlay overlay = new Overlay()) {
                 Map<Integer, String> overlayGuide =
                         prepareOverlayGuide(
@@ -74,7 +77,7 @@ public class PdfOverlayController {
                 overlay.overlay(overlayGuide).save(outputStream);
                 byte[] data = outputStream.toByteArray();
                 String outputFilename =
-                        baseFile.getOriginalFilename().replaceFirst("[.][^.]+$", "")
+                        Filenames.toSimpleFileName(baseFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "")
                                 + "_overlayed.pdf"; // Remove file extension and append .pdf
 
                 return WebResponseUtils.bytesToWebResponse(
@@ -131,10 +134,10 @@ public class PdfOverlayController {
                 overlayFileIndex = (overlayFileIndex + 1) % overlayFiles.length;
             }
 
-            try (PDDocument overlayPdf = PDDocument.load(overlayFiles[overlayFileIndex])) {
+            try (PDDocument overlayPdf = Loader.loadPDF(overlayFiles[overlayFileIndex])) {
                 PDDocument singlePageDocument = new PDDocument();
                 singlePageDocument.addPage(overlayPdf.getPage(pageCountInCurrentOverlay));
-                File tempFile = File.createTempFile("overlay-page-", ".pdf");
+                File tempFile = Files.createTempFile("overlay-page-", ".pdf").toFile();
                 singlePageDocument.save(tempFile);
                 singlePageDocument.close();
 
@@ -147,7 +150,7 @@ public class PdfOverlayController {
     }
 
     private int getNumberOfPages(File file) throws IOException {
-        try (PDDocument doc = PDDocument.load(file)) {
+        try (PDDocument doc = Loader.loadPDF(file)) {
             return doc.getNumberOfPages();
         }
     }
@@ -159,7 +162,7 @@ public class PdfOverlayController {
             File overlayFile = overlayFiles[(basePageIndex - 1) % overlayFiles.length];
 
             // Load the overlay document to check its page count
-            try (PDDocument overlayPdf = PDDocument.load(overlayFile)) {
+            try (PDDocument overlayPdf = Loader.loadPDF(overlayFile)) {
                 int overlayPageCount = overlayPdf.getNumberOfPages();
                 if ((basePageIndex - 1) % overlayPageCount < overlayPageCount) {
                     overlayGuide.put(basePageIndex, overlayFile.getAbsolutePath());
@@ -181,7 +184,7 @@ public class PdfOverlayController {
             int repeatCount = counts[i];
 
             // Load the overlay document to check its page count
-            try (PDDocument overlayPdf = PDDocument.load(overlayFile)) {
+            try (PDDocument overlayPdf = Loader.loadPDF(overlayFile)) {
                 int overlayPageCount = overlayPdf.getNumberOfPages();
                 for (int j = 0; j < repeatCount; j++) {
                     for (int page = 0; page < overlayPageCount; page++) {

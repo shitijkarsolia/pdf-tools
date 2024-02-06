@@ -1,7 +1,9 @@
 package stirling.software.SPDF.controller.api;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
@@ -37,7 +39,7 @@ public class RotationController {
         MultipartFile pdfFile = request.getFileInput();
         Integer angle = request.getAngle();
         // Load the PDF document
-        PDDocument document = PDDocument.load(pdfFile.getBytes());
+        PDDocument document = Loader.loadPDF(pdfFile.getBytes());
 
         // Get the list of pages in the document
         PDPageTree pages = document.getPages();
@@ -48,6 +50,6 @@ public class RotationController {
 
         return WebResponseUtils.pdfDocToWebResponse(
                 document,
-                pdfFile.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_rotated.pdf");
+                Filenames.toSimpleFileName(pdfFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_rotated.pdf");
     }
 }

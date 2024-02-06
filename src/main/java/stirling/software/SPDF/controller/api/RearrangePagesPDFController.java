@@ -1,9 +1,11 @@
 package stirling.software.SPDF.controller.api;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ public class RearrangePagesPDFController {
         MultipartFile pdfFile = request.getFileInput();
         String pagesToDelete = request.getPageNumbers();
 
-        PDDocument document = PDDocument.load(pdfFile.getBytes());
+        PDDocument document = Loader.loadPDF(pdfFile.getBytes());
 
         // Split the page order string into an array of page numbers or range of numbers
         String[] pageOrderArr = pagesToDelete.split(",");
@@ -56,7 +58,7 @@ public class RearrangePagesPDFController {
         }
         return WebResponseUtils.pdfDocToWebResponse(
                 document,
-                pdfFile.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_removed_pages.pdf");
+                Filenames.toSimpleFileName(pdfFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_removed_pages.pdf");
     }
 
     private List<Integer> removeFirst(int totalPages) {
@@ -179,7 +181,7 @@ public class RearrangePagesPDFController {
         String sortType = request.getCustomMode();
         try {
             // Load the input PDF
-            PDDocument document = PDDocument.load(pdfFile.getInputStream());
+            PDDocument document = Loader.loadPDF(pdfFile.getBytes());
 
             // Split the page order string into an array of page numbers or range of numbers
             String[] pageOrderArr = pageOrder != null ? pageOrder.split(",") : new String[0];
@@ -210,7 +212,7 @@ public class RearrangePagesPDFController {
 
             return WebResponseUtils.pdfDocToWebResponse(
                     document,
-                    pdfFile.getOriginalFilename().replaceFirst("[.][^.]+$", "")
+                    Filenames.toSimpleFileName(pdfFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "")
                             + "_rearranged.pdf");
         } catch (IOException e) {
             logger.error("Failed rearranging documents", e);

@@ -1,5 +1,6 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,6 +8,7 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -67,7 +69,7 @@ public class MetadataController {
             allRequestParams = new java.util.HashMap<String, String>();
         }
         // Load the PDF file into a PDDocument
-        PDDocument document = PDDocument.load(pdfFile.getBytes());
+        PDDocument document = Loader.loadPDF(pdfFile.getBytes());
 
         // Get the document information from the PDF
         PDDocumentInformation info = document.getDocumentInformation();
@@ -108,15 +110,15 @@ public class MetadataController {
             for (Entry<String, String> entry : allRequestParams.entrySet()) {
                 String key = entry.getKey();
                 // Check if the key is a standard metadata key
-                if (!key.equalsIgnoreCase("Author")
-                        && !key.equalsIgnoreCase("CreationDate")
-                        && !key.equalsIgnoreCase("Creator")
-                        && !key.equalsIgnoreCase("Keywords")
-                        && !key.equalsIgnoreCase("modificationDate")
-                        && !key.equalsIgnoreCase("Producer")
-                        && !key.equalsIgnoreCase("Subject")
-                        && !key.equalsIgnoreCase("Title")
-                        && !key.equalsIgnoreCase("Trapped")
+                if (!"Author".equalsIgnoreCase(key)
+                        && !"CreationDate".equalsIgnoreCase(key)
+                        && !"Creator".equalsIgnoreCase(key)
+                        && !"Keywords".equalsIgnoreCase(key)
+                        && !"modificationDate".equalsIgnoreCase(key)
+                        && !"Producer".equalsIgnoreCase(key)
+                        && !"Subject".equalsIgnoreCase(key)
+                        && !"Title".equalsIgnoreCase(key)
+                        && !"Trapped".equalsIgnoreCase(key)
                         && !key.contains("customKey")
                         && !key.contains("customValue")) {
                     info.setCustomMetadataValue(key, entry.getValue());
@@ -163,6 +165,6 @@ public class MetadataController {
         document.setDocumentInformation(info);
         return WebResponseUtils.pdfDocToWebResponse(
                 document,
-                pdfFile.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_metadata.pdf");
+                Filenames.toSimpleFileName(pdfFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_metadata.pdf");
     }
 }

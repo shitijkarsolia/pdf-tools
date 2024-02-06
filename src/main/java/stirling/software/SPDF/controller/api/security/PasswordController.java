@@ -1,7 +1,9 @@
 package stirling.software.SPDF.controller.api.security;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
@@ -38,11 +40,11 @@ public class PasswordController {
         MultipartFile fileInput = request.getFileInput();
         String password = request.getPassword();
 
-        PDDocument document = PDDocument.load(fileInput.getBytes(), password);
+        PDDocument document = Loader.loadPDF(fileInput.getBytes(), password);
         document.setAllSecurityToBeRemoved(true);
         return WebResponseUtils.pdfDocToWebResponse(
                 document,
-                fileInput.getOriginalFilename().replaceFirst("[.][^.]+$", "")
+                Filenames.toSimpleFileName(fileInput.getOriginalFilename()).replaceFirst("[.][^.]+$", "")
                         + "_password_removed.pdf");
     }
 
@@ -66,7 +68,7 @@ public class PasswordController {
         boolean canPrint = request.isCanPrint();
         boolean canPrintFaithful = request.isCanPrintFaithful();
 
-        PDDocument document = PDDocument.load(fileInput.getBytes());
+        PDDocument document = Loader.loadPDF(fileInput.getBytes());
         AccessPermission ap = new AccessPermission();
         ap.setCanAssembleDocument(!canAssembleDocument);
         ap.setCanExtractContent(!canExtractContent);
@@ -87,10 +89,10 @@ public class PasswordController {
         if ("".equals(ownerPassword) && "".equals(password))
             return WebResponseUtils.pdfDocToWebResponse(
                     document,
-                    fileInput.getOriginalFilename().replaceFirst("[.][^.]+$", "")
+                    Filenames.toSimpleFileName(fileInput.getOriginalFilename()).replaceFirst("[.][^.]+$", "")
                             + "_permissions.pdf");
         return WebResponseUtils.pdfDocToWebResponse(
                 document,
-                fileInput.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_passworded.pdf");
+                Filenames.toSimpleFileName(fileInput.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_passworded.pdf");
     }
 }

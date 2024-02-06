@@ -1,5 +1,6 @@
 package stirling.software.SPDF.controller.api.security;
 
+import io.github.pixee.security.Filenames;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Calendar;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.examples.signature.CreateSignatureBase;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
@@ -73,7 +75,7 @@ public class CertSignController {
     @Operation(
             summary = "Sign PDF with a Digital Certificate",
             description =
-                    "This endpoint accepts a PDF file, a digital certificate and related information to sign the PDF. It then returns the digitally signed PDF file. Input:PDF Output:PDF Type:MF-SISO")
+                    "This endpoint accepts a PDF file, a digital certificate and related information to sign the PDF. It then returns the digitally signed PDF file. Input:PDF Output:PDF Type:SISO")
     public ResponseEntity<byte[]> signPDFWithCert(@ModelAttribute SignPDFWithCertRequest request)
             throws Exception {
         MultipartFile pdf = request.getFileInput();
@@ -122,7 +124,7 @@ public class CertSignController {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         sign(pdf.getBytes(), baos, createSignature, name, location, reason);
         return WebResponseUtils.boasToWebResponse(
-                baos, pdf.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_signed.pdf");
+                baos, Filenames.toSimpleFileName(pdf.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_signed.pdf");
     }
 
     private static void sign(
@@ -132,7 +134,7 @@ public class CertSignController {
             String name,
             String location,
             String reason) {
-        try (PDDocument doc = PDDocument.load(input)) {
+        try (PDDocument doc = Loader.loadPDF(input)) {
             PDSignature signature = new PDSignature();
             signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE);
             signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);

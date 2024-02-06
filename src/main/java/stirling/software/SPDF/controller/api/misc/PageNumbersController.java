@@ -1,14 +1,17 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -48,7 +51,7 @@ public class PageNumbersController {
         String customText = request.getCustomText();
         int pageNumber = startingNumber;
         byte[] fileBytes = file.getBytes();
-        PDDocument document = PDDocument.load(fileBytes);
+        PDDocument document = Loader.loadPDF(fileBytes);
 
         float marginFactor;
         switch (customMargin.toLowerCase()) {
@@ -71,7 +74,6 @@ public class PageNumbersController {
         }
 
         float fontSize = 12.0f;
-        PDType1Font font = PDType1Font.HELVETICA;
         if (pagesToNumber == null || pagesToNumber.length() == 0) {
             pagesToNumber = "all";
         }
@@ -92,7 +94,7 @@ public class PageNumbersController {
                                     .replace("{total}", String.valueOf(document.getNumberOfPages()))
                                     .replace(
                                             "{filename}",
-                                            file.getOriginalFilename()
+                                            Filenames.toSimpleFileName(file.getOriginalFilename())
                                                     .replaceFirst("[.][^.]+$", ""))
                             : String.valueOf(pageNumber);
 
@@ -127,9 +129,9 @@ public class PageNumbersController {
 
             PDPageContentStream contentStream =
                     new PDPageContentStream(
-                            document, page, PDPageContentStream.AppendMode.APPEND, true);
+                            document, page, PDPageContentStream.AppendMode.APPEND, true, true);
             contentStream.beginText();
-            contentStream.setFont(font, fontSize);
+            contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), fontSize);
             contentStream.newLineAtOffset(x, y);
             contentStream.showText(text);
             contentStream.endText();
@@ -144,7 +146,7 @@ public class PageNumbersController {
 
         return WebResponseUtils.bytesToWebResponse(
                 baos.toByteArray(),
-                file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_numbersAdded.pdf",
+                Filenames.toSimpleFileName(file.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_numbersAdded.pdf",
                 MediaType.APPLICATION_PDF);
     }
 }

@@ -1,5 +1,6 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -13,6 +14,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -147,7 +149,7 @@ public class CompressController {
         if (expectedOutputSize != null && autoMode) {
             long outputFileSize = Files.size(tempOutputFile);
             if (outputFileSize > expectedOutputSize) {
-                try (PDDocument doc = PDDocument.load(new File(tempOutputFile.toString()))) {
+                try (PDDocument doc = Loader.loadPDF(new File(tempOutputFile.toString()))) {
                     long previousFileSize = 0;
                     double scaleFactor = 1.0;
                     while (true) {
@@ -263,7 +265,7 @@ public class CompressController {
 
         // Return the optimized PDF as a response
         String outputFilename =
-                inputFile.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_Optimized.pdf";
+                Filenames.toSimpleFileName(inputFile.getOriginalFilename()).replaceFirst("[.][^.]+$", "") + "_Optimized.pdf";
         return WebResponseUtils.bytesToWebResponse(pdfBytes, outputFilename);
     }
 }

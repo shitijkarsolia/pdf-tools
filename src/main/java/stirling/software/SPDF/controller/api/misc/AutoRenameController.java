@@ -1,10 +1,12 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
@@ -43,7 +45,7 @@ public class AutoRenameController {
         MultipartFile file = request.getFileInput();
         Boolean useFirstTextAsFallback = request.isUseFirstTextAsFallback();
 
-        PDDocument document = PDDocument.load(file.getInputStream());
+        PDDocument document = Loader.loadPDF(file.getBytes());
         PDFTextStripper reader =
                 new PDFTextStripper() {
                     class LineInfo {
@@ -132,7 +134,7 @@ public class AutoRenameController {
             return WebResponseUtils.pdfDocToWebResponse(document, header + ".pdf");
         } else {
             logger.info("File has no good title to be found");
-            return WebResponseUtils.pdfDocToWebResponse(document, file.getOriginalFilename());
+            return WebResponseUtils.pdfDocToWebResponse(document, Filenames.toSimpleFileName(file.getOriginalFilename()));
         }
     }
 }

@@ -1,5 +1,6 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -14,6 +15,7 @@ import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -53,7 +55,7 @@ public class ExtractImagesController {
 
         System.out.println(
                 System.currentTimeMillis() + "file=" + file.getName() + ", format=" + format);
-        PDDocument document = PDDocument.load(file.getBytes());
+        PDDocument document = Loader.loadPDF(file.getBytes());
 
         // Create ByteArrayOutputStream to write zip file to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -65,7 +67,7 @@ public class ExtractImagesController {
         zos.setLevel(Deflater.BEST_COMPRESSION);
 
         int imageIndex = 1;
-        String filename = file.getOriginalFilename().replaceFirst("[.][^.]+$", "");
+        String filename = Filenames.toSimpleFileName(file.getOriginalFilename()).replaceFirst("[.][^.]+$", "");
         int pageNum = 0;
         Set<Integer> processedImages = new HashSet<>();
         // Iterate over each page
@@ -84,19 +86,19 @@ public class ExtractImagesController {
                     // Convert image to desired format
                     RenderedImage renderedImage = image.getImage();
                     BufferedImage bufferedImage = null;
-                    if (format.equalsIgnoreCase("png")) {
+                    if ("png".equalsIgnoreCase(format)) {
                         bufferedImage =
                                 new BufferedImage(
                                         renderedImage.getWidth(),
                                         renderedImage.getHeight(),
                                         BufferedImage.TYPE_INT_ARGB);
-                    } else if (format.equalsIgnoreCase("jpeg") || format.equalsIgnoreCase("jpg")) {
+                    } else if ("jpeg".equalsIgnoreCase(format) || "jpg".equalsIgnoreCase(format)) {
                         bufferedImage =
                                 new BufferedImage(
                                         renderedImage.getWidth(),
                                         renderedImage.getHeight(),
                                         BufferedImage.TYPE_INT_RGB);
-                    } else if (format.equalsIgnoreCase("gif")) {
+                    } else if ("gif".equalsIgnoreCase(format)) {
                         bufferedImage =
                                 new BufferedImage(
                                         renderedImage.getWidth(),

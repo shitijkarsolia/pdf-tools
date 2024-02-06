@@ -1,7 +1,15 @@
 package stirling.software.SPDF.controller.api.converters;
 
+import io.github.pixee.security.Filenames;
+import java.util.List;
+import java.util.Map;
+
+import org.commonmark.Extension;
+import org.commonmark.ext.gfm.tables.TableBlock;
+import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.AttributeProvider;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,7 +40,7 @@ public class ConvertMarkdownToPdf {
     @Operation(
             summary = "Convert a Markdown file to PDF",
             description =
-                    "This endpoint takes a Markdown file input, converts it to HTML, and then to PDF format.")
+                    "This endpoint takes a Markdown file input, converts it to HTML, and then to PDF format. Input:MARKDOWN Output:PDF Type:SISO")
     public ResponseEntity<byte[]> markdownToPdf(@ModelAttribute GeneralFile request)
             throws Exception {
         MultipartFile fileInput = request.getFileInput();
@@ -41,24 +49,40 @@ public class ConvertMarkdownToPdf {
             throw new IllegalArgumentException("Please provide a Markdown file for conversion.");
         }
 
-        String originalFilename = fileInput.getOriginalFilename();
+        String originalFilename = Filenames.toSimpleFileName(fileInput.getOriginalFilename());
         if (originalFilename == null || !originalFilename.endsWith(".md")) {
             throw new IllegalArgumentException("File must be in .md format.");
         }
 
         // Convert Markdown to HTML using CommonMark
-        Parser parser = Parser.builder().build();
+        List<Extension> extensions = List.of(TablesExtension.create());
+        Parser parser = Parser.builder().extensions(extensions).build();
+
         Node document = parser.parse(new String(fileInput.getBytes()));
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        HtmlRenderer renderer =
+                HtmlRenderer.builder()
+                        .attributeProviderFactory(context -> new TableAttributeProvider())
+                        .extensions(extensions)
+                        .build();
+
         String htmlContent = renderer.render(document);
 
         byte[] pdfBytes =
                 FileToPdf.convertHtmlToPdf(
-                        htmlContent.getBytes(), "converted.html", htmlFormatsInstalled);
+                        null, htmlContent.getBytes(), "converted.html", htmlFormatsInstalled);
 
         String outputFilename =
                 originalFilename.replaceFirst("[.][^.]+$", "")
                         + ".pdf"; // Remove file extension and append .pdf
         return WebResponseUtils.bytesToWebResponse(pdfBytes, outputFilename);
+    }
+}
+
+class TableAttributeProvider implements AttributeProvider {
+    @Override
+    public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+        if (node instanceof TableBlock) {
+            attributes.put("class", "table table-striped");
+        }
     }
 }

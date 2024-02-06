@@ -1,8 +1,10 @@
 package stirling.software.SPDF.controller.api.misc;
 
+import io.github.pixee.security.Filenames;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDNameTreeNode;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionJavaScript;
@@ -36,7 +38,7 @@ public class ShowJavascript {
         MultipartFile inputFile = request.getFileInput();
         String script = "";
 
-        try (PDDocument document = PDDocument.load(inputFile.getInputStream())) {
+        try (PDDocument document = Loader.loadPDF(inputFile.getBytes())) {
 
             if (document.getDocumentCatalog() != null
                     && document.getDocumentCatalog().getNames() != null) {
@@ -53,7 +55,7 @@ public class ShowJavascript {
 
                         script +=
                                 "// File: "
-                                        + inputFile.getOriginalFilename()
+                                        + Filenames.toSimpleFileName(inputFile.getOriginalFilename())
                                         + ", Script: "
                                         + name
                                         + "\n"
